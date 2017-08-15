@@ -81,7 +81,7 @@ tf.app.flags.DEFINE_float('cov_loss_wt', 1.0,
 tf.app.flags.DEFINE_boolean('convert_to_coverage_model', False,
                             'Convert a non-coverage model to a coverage model. Turn this on and run in train mode. Your current model will be copied to a new version (same name with _cov_init appended) that will be ready to run with coverage flag turned on, for the coverage training stage.')
 
-with open('templates/fish_article.txt') as f:
+with open('server/templates/fish_article.txt') as f:
   default_article = f.read()
 
 
