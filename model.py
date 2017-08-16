@@ -47,7 +47,7 @@ class SummarizationModel(object):
     # encoder part
     self._enc_batch = tf.placeholder(tf.int32, [hps.batch_size, None], name='enc_batch')
     self._enc_lens = tf.placeholder(tf.int32, [hps.batch_size], name='enc_lens')
-    if FLAGS.pointer_gen:
+    if self._hps.pointer_gen:
       self._enc_batch_extend_vocab = tf.placeholder(tf.int32, [hps.batch_size, None], name='enc_batch_extend_vocab')
       self._max_art_oovs = tf.placeholder(tf.int32, [], name='max_art_oovs')
 
@@ -70,7 +70,7 @@ class SummarizationModel(object):
     feed_dict = {}
     feed_dict[self._enc_batch] = batch.enc_batch
     feed_dict[self._enc_lens] = batch.enc_lens
-    if FLAGS.pointer_gen:
+    if self._hps.pointer_gen:
       feed_dict[self._enc_batch_extend_vocab] = batch.enc_batch_extend_vocab
       feed_dict[self._max_art_oovs] = batch.max_art_oovs
     if not just_enc:
@@ -264,7 +264,7 @@ class SummarizationModel(object):
 
 
       # For pointer-generator model, calc final distribution from copy distribution and vocabulary distribution, then take log
-      if FLAGS.pointer_gen:
+      if self._hps.pointer_gen:
         final_dists = self._calc_final_dist(vocab_dists, self.attn_dists)
         # Take log of final distribution
         log_dists = [tf.log(dist) for dist in final_dists]
@@ -275,7 +275,7 @@ class SummarizationModel(object):
       if hps.mode in ['train', 'eval']:
         # Calculate the loss
         with tf.variable_scope('loss'):
-          if FLAGS.pointer_gen: # calculate loss from log_dists
+          if self._hps.pointer_gen: # calculate loss from log_dists
             # Calculate the loss per step
             # This is fiddly; we use tf.gather_nd to pick out the log probabilities of the target words
             loss_per_step = [] # will be list length max_dec_steps containing shape (batch_size)
@@ -431,7 +431,7 @@ class SummarizationModel(object):
       "attn_dists": self.attn_dists
     }
 
-    if FLAGS.pointer_gen:
+    if self._hps.pointer_gen:
       feed[self._enc_batch_extend_vocab] = batch.enc_batch_extend_vocab
       feed[self._max_art_oovs] = batch.max_art_oovs
       to_return['p_gens'] = self.p_gens
@@ -449,7 +449,7 @@ class SummarizationModel(object):
     assert len(results['attn_dists'])==1
     attn_dists = results['attn_dists'][0].tolist()
 
-    if FLAGS.pointer_gen:
+    if self._hps.pointer_gen:
       # Convert singleton list containing a tensor to a list of k arrays
       assert len(results['p_gens'])==1
       p_gens = results['p_gens'][0].tolist()
@@ -457,7 +457,7 @@ class SummarizationModel(object):
       p_gens = [None for _ in range(beam_size)]
 
     # Convert the coverage tensor to a list length k containing the coverage vector for each hypothesis
-    if FLAGS.coverage:
+    if self._hps.coverage:
       new_coverage = results['coverage'].tolist()
       assert len(new_coverage) == beam_size
     else:
